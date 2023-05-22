@@ -1,1 +1,1 @@
-# Hotel-Ratings-Application
+# Hotel-Ratings-Application :hotel:
