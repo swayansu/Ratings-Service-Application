@@ -7,4 +7,4 @@ This is a sample personal project to utilise the learnings of micro-services usi
 
 ### The architecture of the project is shown below:
 
-![Project architechture](C:\Users\ASUS\Downloads\arch.jpg)
+![Project architechture](E:\Studies\Springboot\Microservices\UserService)
