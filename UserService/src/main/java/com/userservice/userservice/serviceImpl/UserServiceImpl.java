@@ -1,6 +1,7 @@
 package com.userservice.userservice.serviceImpl;
 
 import com.userservice.userservice.Exception.ResourceNotFoundException;
+import com.userservice.userservice.entities.Hotel;
 import com.userservice.userservice.entities.Rating;
 import com.userservice.userservice.entities.User;
 import com.userservice.userservice.repositories.UserRepository;
@@ -8,13 +9,13 @@ import com.userservice.userservice.services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import javax.xml.ws.Response;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -45,11 +46,19 @@ public class UserServiceImpl implements UserService {
 
         User user = userRepository.findById(userId).orElseThrow(ResourceNotFoundException::new);
         // Fetching the getRatingsByUser() from the ratingServices
-        // Url: http://localhost:8083/ratings/c80a0a46-3c49-4e1c-a3b2-e0e75d4154a7
+        // Url: http://localhost:8083/ratings/{userID}
 
-        ArrayList forObject = restTemplate.getForObject("http://localhost:8083/ratings/"+userId, ArrayList.class);
-//        logger.info("{}", forObject);
-        user.setRatings(forObject);
+        Rating[] forObject = restTemplate.getForObject("http://RATINGS-SERVICE/ratings/"+userId, Rating[].class);
+
+        // Adding The hotels by calling hotels by ID
+        List<Rating> ratings = Arrays.asList(forObject);
+        List<Rating> ratingList = ratings.stream().map(rating -> {
+            ResponseEntity<Hotel> forEntity= restTemplate.getForEntity("http://HOTEL-SERVICE/hotels/"+rating.getHotelId(), Hotel.class);
+            Hotel hotel = forEntity.getBody();
+            rating.setHotel(hotel);
+            return rating;
+        }).collect(Collectors.toList());
+        user.setRatings(ratingList);
         return user;
     }
 
