@@ -4,6 +4,8 @@ import com.userservice.userservice.Exception.ResourceNotFoundException;
 import com.userservice.userservice.entities.Hotel;
 import com.userservice.userservice.entities.Rating;
 import com.userservice.userservice.entities.User;
+import com.userservice.userservice.external.services.HotelService;
+import com.userservice.userservice.external.services.RatingService;
 import com.userservice.userservice.repositories.UserRepository;
 import com.userservice.userservice.services.UserService;
 import org.slf4j.Logger;
@@ -26,6 +28,12 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private HotelService hotelService;
+
+    @Autowired
+    private RatingService ratingService;
+
     private Logger logger  = LoggerFactory.getLogger(UserService.class);
 
 
@@ -45,16 +53,26 @@ public class UserServiceImpl implements UserService {
     public User getUser(String userId) {
 
         User user = userRepository.findById(userId).orElseThrow(ResourceNotFoundException::new);
-        // Fetching the getRatingsByUser() from the ratingServices
+
+
+        // Fetching the getRatingsByUser() from the ratingServices using Resttemplate
         // Url: http://localhost:8083/ratings/{userID}
 
-        Rating[] forObject = restTemplate.getForObject("http://RATINGS-SERVICE/ratings/"+userId, Rating[].class);
-
-        // Adding The hotels by calling hotels by ID
-        List<Rating> ratings = Arrays.asList(forObject);
-        List<Rating> ratingList = ratings.stream().map(rating -> {
-            ResponseEntity<Hotel> forEntity= restTemplate.getForEntity("http://HOTEL-SERVICE/hotels/"+rating.getHotelId(), Hotel.class);
-            Hotel hotel = forEntity.getBody();
+//        Rating[] forObject = restTemplate.getForObject("http://RATINGS-SERVICE/ratings/"+userId, Rating[].class);
+//
+//        //Adding The hotels by calling hotels by ID
+//        List<Rating> ratings = Arrays.asList(forObject);
+//        List<Rating> ratingList = ratings.stream().map(rating -> {
+//            ResponseEntity<Hotel> forEntity= restTemplate.getForEntity("http://HOTEL-SERVICE/hotels/"+rating.getHotelId(), Hotel.class);
+//            Hotel hotel = forEntity.getBody();
+//            rating.setHotel(hotel);
+//            return rating;
+//        }).collect(Collectors.toList());
+//        user.setRatings(ratingList);
+//        return user;
+        List<Rating> userRatings = ratingService.getRatingsByUserId(userId);
+        List<Rating> ratingList = userRatings.stream().map(rating -> {
+            Hotel hotel = hotelService.getHotel(rating.getHotelId());
             rating.setHotel(hotel);
             return rating;
         }).collect(Collectors.toList());
