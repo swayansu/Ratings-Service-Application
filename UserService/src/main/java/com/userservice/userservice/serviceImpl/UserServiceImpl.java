@@ -36,6 +36,14 @@ public class UserServiceImpl implements UserService {
 
     private Logger logger  = LoggerFactory.getLogger(UserService.class);
 
+    private List<Rating> getUserRating(List<Rating> users){
+        List<Rating> ratingList = users.stream().map(rating -> {
+            Hotel hotel = hotelService.getHotel(rating.getHotelId());
+            rating.setHotel(hotel);
+            return rating;
+        }).collect(Collectors.toList());
+        return ratingList;
+    }
 
     @Override
     public User saveUser(User user) {
@@ -46,7 +54,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> getAlluser() {
-        return userRepository.findAll();
+        List<User> updatedUserList= userRepository.findAll();
+        return updatedUserList.stream().map(user -> {
+            List<Rating> userRatings = ratingService.getRatingsByUserId(user.getUserId());
+            List<Rating> ratingList = getUserRating(userRatings);
+            user.setRatings(ratingList);
+            return user;
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -71,11 +85,7 @@ public class UserServiceImpl implements UserService {
 //        user.setRatings(ratingList);
 //        return user;
         List<Rating> userRatings = ratingService.getRatingsByUserId(userId);
-        List<Rating> ratingList = userRatings.stream().map(rating -> {
-            Hotel hotel = hotelService.getHotel(rating.getHotelId());
-            rating.setHotel(hotel);
-            return rating;
-        }).collect(Collectors.toList());
+        List<Rating> ratingList = getUserRating(userRatings);
         user.setRatings(ratingList);
         return user;
     }
